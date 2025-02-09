@@ -15,4 +15,9 @@ class CharacterRemoteDataSource {
       throw Exception('Error al obtener personajes: $e');
     }
   }
+  
+  Future<List<dynamic>> searchCharacters(String query) async {
+    final response = await apiClient.get('/character?name=$query');
+    return response.data['results'] ?? [];
+  }
 }

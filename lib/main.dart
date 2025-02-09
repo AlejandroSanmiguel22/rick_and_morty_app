@@ -11,6 +11,7 @@ import 'package:rick_and_morty/domain/repositories/episode_repository.dart';
 import 'package:rick_and_morty/domain/repositories/location_repository.dart';
 import 'package:rick_and_morty/domain/repositories/resident_repository.dart';
 import 'package:rick_and_morty/presentation/bloc/cubits/characters/character_cubit.dart';
+import 'package:rick_and_morty/presentation/bloc/cubits/characters/search_characters_cubit.dart';
 import 'package:rick_and_morty/presentation/bloc/cubits/episodes/episode_cubit.dart';
 import 'package:rick_and_morty/presentation/bloc/cubits/episodes/episode_name_cubit.dart';
 import 'package:rick_and_morty/presentation/bloc/cubits/favorites_cubit.dart';
@@ -49,6 +50,7 @@ void setupLocator() {
   final residentRepository =
       ResidentRepositoryImpl(remoteDataSource: residentRemoteDataSource);
   GetIt.I.registerSingleton<ResidentRepository>(residentRepository);
+
 }
 
 class MyApp extends StatelessWidget {
@@ -64,13 +66,15 @@ class MyApp extends StatelessWidget {
                 ..fetchCharacters(),
         ),
         BlocProvider(
-            create: (context) => EpisodeCubit(
-                  episodeRepository: GetIt.I<EpisodeRepository>(),
-                )..fetchEpisodes()),
+          create: (context) => EpisodeCubit(
+            episodeRepository: GetIt.I<EpisodeRepository>(),
+          )..fetchEpisodes()
+        ),
         BlocProvider(
-            create: (context) => EpisodeNameCubit(
-                  episodeRepository: GetIt.I<EpisodeRepository>(),
-                )),
+          create: (context) => EpisodeNameCubit(
+            episodeRepository: GetIt.I<EpisodeRepository>(),
+          )
+        ),
         BlocProvider(
           create: (context) => FavoritesCubit()..loadFavorites(),
         ),
@@ -82,6 +86,12 @@ class MyApp extends StatelessWidget {
         BlocProvider(
           create: (context) =>
               ResidentCubit(residentRepository: GetIt.I<ResidentRepository>()),
+        ),
+
+        BlocProvider(
+          create: (context) => SearchCharactersCubit(
+            GetIt.I<CharacterRepository>(),
+          ),
         ),
       ],
       child: MaterialApp(
