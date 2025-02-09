@@ -57,9 +57,14 @@ class EpisodeRemoteDataSource {
             "episode": episodes.join(','), // Unimos múltiples temporadas
         },
       );
+      print(
+          "URL llamada: https://rickandmortyapi.com/api/episode/?name=$name&episode=${episodes?.join(',')}");
       final List results = response.data['results'];
       return results.map((e) => EpisodeModel.fromJson(e)).toList();
     } catch (e) {
+      print(
+          "URL llamada: https://rickandmortyapi.com/api/episode/?name=$name&episode=${episodes?.join(',')}");
+
       throw Exception('Error searching episodes');
     }
   }
