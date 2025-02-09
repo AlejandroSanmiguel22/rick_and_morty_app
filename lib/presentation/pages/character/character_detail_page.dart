@@ -54,14 +54,14 @@ class CharacterDetailPage extends StatelessWidget {
                 style:
                     const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
-            Text("Especie: ${character.species}"),
-            Text("Estado: ${character.status}"),
-            Text("Género: ${character.gender}"),
-            Text("Origen: ${character.origin}"),
-            Text("Ubicación: ${character.location}"),
+            Text("Species: ${character.species}"),
+            Text("Status: ${character.status}"),
+            Text("Gender: ${character.gender}"),
+            Text("Origin: ${character.origin}"),
+            Text("Location: ${character.location}"),
             const SizedBox(height: 20),
             const Text(
-              "Apariciones en episodios:",
+              "Episode appearances:",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             BlocBuilder<EpisodeNameCubit, EpisodeNameState>(

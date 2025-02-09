@@ -27,25 +27,10 @@ class CharacterRemoteDataSource {
 
   Future<List<CharacterModel>> searchCharacters(String query,
       {String? status, String? gender}) async {
-    final statusMap = {
-      'Vivo': 'alive',
-      'Muerto': 'dead',
-      'Desconocido': 'unknown',
-    };
-
-    final genderMap = {
-      'Hombre': 'male',
-      'Mujer': 'female',
-      'Sin género': 'genderless',
-      'Desconocido': 'unknown',
-    };
-
     final queryParams = {
       if (query.isNotEmpty) 'name': query,
-      if (status != null && statusMap.containsKey(status))
-        'status': statusMap[status],
-      if (gender != null && genderMap.containsKey(gender))
-        'gender': genderMap[gender],
+      if (status != null) 'status': status,
+      if (gender != null) 'gender': gender,
     };
 
     print(

@@ -1,15 +1,16 @@
 import 'package:dio/dio.dart';
+import 'package:rick_and_morty/core/network/api_client.dart';
 import '../../models/location_model.dart';
 
 class LocationRemoteDataSource {
-  final Dio dio;
+  final ApiClient apiClient;
 
-  LocationRemoteDataSource(this.dio);
+  LocationRemoteDataSource(this.apiClient);
 
   Future<List<LocationModel>> getLocations() async {
     try {
       final response =
-          await dio.get("https://rickandmortyapi.com/api/location");
+          await apiClient.get("https://rickandmortyapi.com/api/location");
       final List results = response.data['results'];
       return results.map((e) => LocationModel.fromJson(e)).toList();
     } catch (e) {
@@ -19,7 +20,7 @@ class LocationRemoteDataSource {
 
   Future<List<LocationModel>> suggestLocations(String query) async {
     try {
-      final response = await dio
+      final response = await apiClient
           .get("https://rickandmortyapi.com/api/location/?name=$query");
       final List results = response.data['results'];
       return results.map((e) => LocationModel.fromJson(e)).toList();
@@ -37,7 +38,7 @@ class LocationRemoteDataSource {
       if (dimension != null && dimension.isNotEmpty)
         params["dimension"] = dimension;
 
-      final response = await dio.get(
+      final response = await apiClient.dio.get(
           "https://rickandmortyapi.com/api/location/",
           queryParameters: params);
 

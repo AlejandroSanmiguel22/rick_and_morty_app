@@ -28,4 +28,20 @@ class EpisodeRepositoryImpl implements EpisodeRepository {
       return Left('Error al obtener episodios');
     }
   }
+
+  @override
+  Future<Either<String, List<EpisodeEntity>>> searchEpisodes(
+      String episode) async {
+    try {
+      final episodes = await remoteDataSource.searchEpisodes(episode);
+      return Right(episodes);
+    } catch (e) {
+      return Left('Error al buscar episodios');
+    }
+  }
+
+  @override
+  Future<List<EpisodeEntity>> suggestEpisodes(String query) async {
+    return await remoteDataSource.suggestEpisodes(query);
+  }
 }

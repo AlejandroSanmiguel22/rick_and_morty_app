@@ -2,11 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:rick_and_morty/core/usecases/shared_prefs_helper.dart';
 import 'package:rick_and_morty/domain/entities/character_entity.dart';
+import 'package:rick_and_morty/domain/entities/episode_entity.dart';
 import 'package:rick_and_morty/domain/entities/location_entity.dart';
 import 'package:rick_and_morty/presentation/bloc/cubits/characters/search_characters_cubit.dart';
+import 'package:rick_and_morty/presentation/bloc/cubits/episodes/search_episode_cubit.dart';
+import 'package:rick_and_morty/presentation/bloc/cubits/episodes/search_episode_state.dart';
 import 'package:rick_and_morty/presentation/bloc/cubits/locations/search_locations_cubit.dart';
 import 'package:rick_and_morty/presentation/pages/character/character_detail_page.dart';
 import 'package:rick_and_morty/presentation/pages/character/character_list_page.dart';
+import 'package:rick_and_morty/presentation/pages/episode/episode_detail_page.dart';
 import 'package:rick_and_morty/presentation/pages/episode/episode_list_page.dart';
 import 'package:rick_and_morty/presentation/pages/favorites_page.dart';
 import 'package:rick_and_morty/presentation/pages/location/location_detail_page.dart';
@@ -72,8 +76,11 @@ class _HomePageState extends State<HomePage> {
 
   void _selectSearchResult(String query) {
     _prefsHelper.saveLastSearch(query);
-    _searchController.text = query;
-    _performSearch(query);
+    setState(() {
+      _searchController.text = query;
+      _lastSearch = query;
+    });
+    _performSearch(query); // Realiza la búsqueda con el query seleccionado
     _removeOverlay();
   }
 
@@ -89,10 +96,9 @@ class _HomePageState extends State<HomePage> {
     _overlayEntry = OverlayEntry(
       builder: (context) => Stack(
         children: [
-          // Detecta toques fuera del overlay para cerrarlo
           Positioned.fill(
             child: GestureDetector(
-              onTap: _removeOverlay, // Cierra el overlay al tocar fuera
+              onTap: _removeOverlay,
               behavior: HitTestBehavior.translucent,
             ),
           ),
@@ -108,7 +114,7 @@ class _HomePageState extends State<HomePage> {
                 curve: Curves.easeInOut,
                 constraints: const BoxConstraints(
                   minHeight: 60,
-                  maxHeight: 300, // Más espacio para sugerencias
+                  maxHeight: 300,
                 ),
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -122,8 +128,10 @@ class _HomePageState extends State<HomePage> {
                   ],
                 ),
                 child: _selectedIndex == 0
-                    ? _buildCharacterSuggestions() // Para personajes
-                    : _buildLocationSuggestions(), // Para ubicaciones
+                    ? _buildCharacterSuggestions()
+                    : _selectedIndex == 1
+                        ? _buildLocationSuggestions()
+                        : _buildEpisodeSuggestions(),
               ),
             ),
           ),
@@ -198,8 +206,43 @@ class _HomePageState extends State<HomePage> {
             final location = suggestions[index];
             return ListTile(
               title: Text(location.name),
-              subtitle: Text("Dimensión: ${location.dimension}"),
+              subtitle: Text("Dimension: ${location.dimension}"),
               onTap: () => _selectSearchResult(location.name),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildEpisodeSuggestions() {
+    return BlocBuilder<SearchEpisodeCubit, SearchEpisodeState>(
+      builder: (context, state) {
+        List<EpisodeEntity> suggestions = [];
+
+        if (state is SearchEpisodeSuggested) {
+          suggestions = state.suggestions;
+        }
+
+        if (suggestions.isEmpty && _lastSearch.isNotEmpty) {
+          return _buildLastSearchTile(_lastSearch);
+        }
+
+        if (suggestions.isEmpty) {
+          return _buildNoSuggestionsMessage();
+        }
+
+        return ListView.separated(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          shrinkWrap: true,
+          itemCount: suggestions.length,
+          separatorBuilder: (_, __) => const Divider(height: 1, thickness: 0.5),
+          itemBuilder: (context, index) {
+            final episode = suggestions[index];
+            return ListTile(
+              title: Text(episode.name),
+              subtitle: Text("Season: ${episode.episode}"),
+              onTap: () => _selectSearchResult(episode.name),
             );
           },
         );
@@ -229,7 +272,8 @@ class _HomePageState extends State<HomePage> {
     return const Padding(
       padding: EdgeInsets.all(16),
       child: Center(
-        child: Text("No hay sugerencias", style: TextStyle(color: Colors.grey)),
+        child: Text("There is no suggestion",
+            style: TextStyle(color: Colors.grey)),
       ),
     );
   }
@@ -271,9 +315,9 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildSearchAndFilter() {
     String placeholder = [
-      "Buscar personajes...",
-      "Buscar ubicaciones...",
-      "Buscar episodios..."
+      "Search characters...",
+      "Search locations...",
+      "Search for episodes..."
     ][_selectedIndex];
 
     return Padding(
@@ -338,9 +382,9 @@ class _HomePageState extends State<HomePage> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
-        _buildOption("Personajes", 0),
-        _buildOption("Ubicaciones", 1),
-        _buildOption("Episodios", 2),
+        _buildOption("Characters", 0),
+        _buildOption("Locations", 1),
+        _buildOption("Episodes", 2),
       ],
     );
   }
@@ -354,11 +398,8 @@ class _HomePageState extends State<HomePage> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
         ),
-        backgroundColor: isSelected
-            ? Colors.blue
-            : Colors.grey[300], // Color activo/inactivo
-        foregroundColor:
-            isSelected ? Colors.white : Colors.black, // Color del texto
+        backgroundColor: isSelected ? Colors.blue : Colors.grey[300],
+        foregroundColor: isSelected ? Colors.white : Colors.black,
       ),
       onPressed: () {
         setState(() {
@@ -371,95 +412,99 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildContent() {
     return IndexedStack(
-        index: _selectedIndex,
-        children: _pages.map((page) {
-          if (_selectedIndex == 0) {
-            // Personajes
-            return BlocBuilder<SearchCharactersCubit, SearchCharactersState>(
-              builder: (context, state) {
-                if (state is SearchCharactersLoading) {
-                  return const Center(child: CircularProgressIndicator());
-                } else if (state is SearchCharactersLoaded) {
-                  return ListView.builder(
-                    itemCount: state.characters.length,
-                    itemBuilder: (context, index) {
-                      final character = state.characters[index];
-                      return ListTile(
-                        leading: Image.network(character.image),
-                        title: Text(character.name),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(character.species),
-                            Text(character.status),
-                            Text(character.origin),
-                          ],
-                        ),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  CharacterDetailPage(character: character),
-                            ),
-                          );
-                        },
-                      );
-                    },
-                  );
-                } else if (state is SearchCharactersEmpty) {
-                  return const Center(
-                      child: Text("No se encontraron personajes"));
-                } else if (state is SearchCharactersError) {
-                  return Center(child: Text(state.message));
-                }
-                return page;
-              },
-            );
-          } else if (_selectedIndex == 1) {
-            // Ubicaciones
-            return BlocBuilder<SearchLocationsCubit, SearchLocationsState>(
-              builder: (context, state) {
-                if (state is SearchLocationsLoading) {
-                  return const Center(child: CircularProgressIndicator());
-                } else if (state is SearchLocationsLoaded) {
-                  return ListView.builder(
-                    itemCount: state.locations.length,
-                    itemBuilder: (context, index) {
-                      final location = state.locations[index];
-                      return ListTile(
-                        title: Text(location.name),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text("Tipo: ${location.type}"),
-                            Text("Dimensión: ${location.dimension}"),
-                          ],
-                        ),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  LocationDetailPage(location: location),
-                            ),
-                          );
-                        },
-                      );
-                    },
-                  );
-                } else if (state is SearchLocationsEmpty) {
-                  return const Center(
-                      child: Text("No se encontraron ubicaciones"));
-                } else if (state is SearchLocationsError) {
-                  return Center(child: Text(state.message));
-                }
-                return page;
-              },
-            );
-          }
-          return page;
-        }).toList());
+      index: _selectedIndex,
+      children: _pages.map((page) {
+        if (_selectedIndex == 0) {
+          return BlocBuilder<SearchCharactersCubit, SearchCharactersState>(
+            builder: (context, state) {
+              if (state is SearchCharactersLoading) {
+                return const Center(child: CircularProgressIndicator());
+              } else if (state is SearchCharactersLoaded) {
+                return ListView.builder(
+                  itemCount: state.characters.length,
+                  itemBuilder: (context, index) {
+                    final character = state.characters[index];
+                    return ListTile(
+                      leading: Image.network(character.image),
+                      title: Text(character.name),
+                      subtitle: Text(character.status),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                CharacterDetailPage(character: character),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                );
+              }
+              return page;
+            },
+          );
+        } else if (_selectedIndex == 1) {
+          return BlocBuilder<SearchLocationsCubit, SearchLocationsState>(
+            builder: (context, state) {
+              if (state is SearchLocationsLoaded) {
+                return ListView.builder(
+                  itemCount: state.locations.length,
+                  itemBuilder: (context, index) {
+                    final location = state.locations[index];
+                    return ListTile(
+                      title: Text(location.name),
+                      subtitle: Text("Dimension: ${location.dimension}"),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                LocationDetailPage(location: location),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                );
+              }
+              return page;
+            },
+          );
+        }
+        if (_selectedIndex == 2) {
+          return BlocBuilder<SearchEpisodeCubit, SearchEpisodeState>(
+            builder: (context, state) {
+              if (state is SearchEpisodeLoading) {
+                return const Center(child: CircularProgressIndicator());
+              } else if (state is SearchEpisodeLoaded) {
+                return ListView.builder(
+                  itemCount: state.episodes.length,
+                  itemBuilder: (context, index) {
+                    final episode = state.episodes[index];
+                    return ListTile(
+                      title: Text(episode.name),
+                      subtitle: Text("Episode: ${episode.episode}"),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                EpisodeDetailPage(episode: episode),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                );
+              }
+              return page;
+            },
+          );
+        }
+        return page;
+      }).toList(),
+    );
   }
 
   void _performSearch(String query) {
@@ -488,6 +533,9 @@ class _HomePageState extends State<HomePage> {
                   : null,
             );
         break;
+      case 2:
+        context.read<SearchEpisodeCubit>().searchEpisodes(query);
+        break;
     }
   }
 
@@ -500,7 +548,7 @@ class _HomePageState extends State<HomePage> {
         context.read<SearchLocationsCubit>().suggestLocations(query);
         break;
       case 2:
-        // context.read<SearchEpisodesCubit>().suggestEpisodes(query);
+        context.read<SearchEpisodeCubit>().suggestEpisodes(query);
         break;
     }
   }
@@ -528,52 +576,59 @@ class _HomePageState extends State<HomePage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    "Filtrar Resultados",
+                    "Filter Results",
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   const Divider(thickness: 1.2),
                   const SizedBox(height: 10),
                   if (_selectedIndex == 0) ...[
                     const Text(
-                      "Estado",
+                      "Status",
                       style:
                           TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
-                    _buildCheckboxRow(["Vivo", "Muerto", "Desconocido"],
+                    _buildCheckboxRow(["Alive", "Dead", "Unknown"],
                         selectedStatus, setModalState),
                     const SizedBox(height: 12),
                     const Text(
-                      "Sexo",
+                      "Gender",
                       style:
                           TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
-                    _buildCheckboxRow(["Hombre", "Mujer", "Sin género"],
+                    _buildCheckboxRow(["Male", "Female", "Genderless"],
                         selectedGender, setModalState),
                   ],
                   if (_selectedIndex == 1) ...[
                     const Text(
-                      "Tipo",
+                      "Type",
                       style:
                           TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
-                    _buildCheckboxRow(
-                        ["Planeta", "Estación Espacial", "Microverso"],
-                        selectedType,
-                        setModalState),
+                    _buildCheckboxRow(["Planet", "Space Station", "Microverse"],
+                        selectedType, setModalState),
                     const SizedBox(height: 12),
                     const Text(
-                      "Dimensión",
+                      "Dimension",
                       style:
                           TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
-                    _buildCheckboxRow(["C-137", "Cronenberg", "Desconocida"],
+                    _buildCheckboxRow(["C-137", "Cronenberg", "Unknown"],
                         selectedDimension, setModalState),
+                  ],
+                  if (_selectedIndex == 2) ...[
+                    const Text(
+                      "Season",
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    _buildCheckboxRow(["S1", "S2", "S3", "S4", "S5"],
+                        selectedType, setModalState),
                   ],
                   const SizedBox(height: 12),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      _buildOptionButton("Limpiar", Colors.grey, () {
+                      _buildOptionButton("Clean", Colors.grey, () {
                         setModalState(() {
                           if (_selectedIndex == 0) {
                             selectedStatus.clear();
@@ -584,7 +639,7 @@ class _HomePageState extends State<HomePage> {
                           }
                         });
                       }),
-                      _buildOptionButton("Aplicar", Colors.green, () {
+                      _buildOptionButton("Apply", Colors.green, () {
                         Navigator.pop(context);
                         _applyFilters();
                       }),
@@ -661,7 +716,7 @@ class _HomePageState extends State<HomePage> {
 
   void _applyFilters() {
     switch (_selectedIndex) {
-      case 0:
+      case 0: // Personajes
         context.read<SearchCharactersCubit>().searchCharacters(
               _searchController.text,
               status:
@@ -670,7 +725,7 @@ class _HomePageState extends State<HomePage> {
                   selectedGender.isNotEmpty ? selectedGender.join(',') : null,
             );
         break;
-      case 1:
+      case 1: // Ubicaciones
         context.read<SearchLocationsCubit>().searchLocations(
               _searchController.text,
               type: selectedType.isNotEmpty ? selectedType.join(',') : null,
@@ -678,6 +733,17 @@ class _HomePageState extends State<HomePage> {
                   ? selectedDimension.join(',')
                   : null,
             );
+        break;
+      case 2: // Episodios
+        String seasonFilter =
+            selectedType.isNotEmpty ? selectedType.join(',') : "";
+        String searchQuery = _searchController.text;
+
+        if (seasonFilter.isNotEmpty) {
+          searchQuery = "$searchQuery $seasonFilter";
+        }
+
+        context.read<SearchEpisodeCubit>().searchEpisodes(searchQuery);
         break;
     }
   }

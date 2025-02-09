@@ -15,4 +15,5 @@ class EpisodeCubit extends Cubit<EpisodeState> {
       (episodes) => emit(EpisodeLoaded(episodes)),
     );
   }
+  
 }

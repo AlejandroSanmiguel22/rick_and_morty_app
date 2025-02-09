@@ -8,11 +8,11 @@ class FavoritesPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Favoritos")),
+      appBar: AppBar(title: const Text("Favorites")),
       body: BlocBuilder<FavoritesCubit, List<Map<String, dynamic>>>(
         builder: (context, favorites) {
           if (favorites.isEmpty) {
-            return const Center(child: Text("No hay favoritos aún."));
+            return const Center(child: Text("There are no favorites yet."));
           }
           return ListView.builder(
             itemCount: favorites.length,
