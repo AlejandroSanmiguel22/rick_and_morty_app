@@ -52,6 +52,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _removeOverlay() {
+
     _overlayEntry?.remove();
     _overlayEntry = null;
     setState(() {
@@ -103,29 +104,41 @@ class _HomePageState extends State<HomePage> {
                     if (state is SearchCharactersSuggested) {
                       suggestions = state.suggestions;
                     }
+
+                    // Si no hay sugerencias y hay un historial de búsqueda, mostrarlo como historial
                     if (suggestions.isEmpty && _lastSearch.isNotEmpty) {
-                      suggestions = [
-                        CharacterEntity(
-                          id: 0,
-                          name: _lastSearch,
-                          status: '',
-                          species: '',
-                          type: '',
-                          gender: '',
-                          image: '',
-                          episode: [],
-                          origin: '',
-                          location: '',
-                        )
-                      ];
+                      return ListView(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        shrinkWrap: true,
+                        children: [
+                          ListTile(
+                            title: Text(
+                              _lastSearch,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.grey,
+                              ),
+                            ),
+                            leading:
+                                const Icon(Icons.history, color: Colors.grey),
+                            onTap: () {
+                              _selectSearchResult(_lastSearch);
+                            },
+                          ),
+                        ],
+                      );
                     }
 
                     if (suggestions.isEmpty) {
                       return const Padding(
                         padding: EdgeInsets.all(16),
                         child: Center(
-                            child: Text("No hay sugerencias",
-                                style: TextStyle(color: Colors.grey))),
+                          child: Text(
+                            "No hay sugerencias",
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                        ),
                       );
                     }
 
@@ -138,19 +151,28 @@ class _HomePageState extends State<HomePage> {
                       itemBuilder: (context, index) {
                         final character = suggestions[index];
                         return ListTile(
-                          title: Text(character.name,
-                              style: const TextStyle(
-                                  fontSize: 16, fontWeight: FontWeight.w500)),
+                          title: Text(
+                            character.name,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
                           subtitle: character.status.isNotEmpty
-                              ? Text(character.status,
+                              ? Text(
+                                  character.status,
                                   style: const TextStyle(
-                                      fontSize: 14, color: Colors.grey))
+                                    fontSize: 14,
+                                    color: Colors.grey,
+                                  ),
+                                )
                               : null,
                           leading: character.image.isNotEmpty
                               ? CircleAvatar(
                                   backgroundImage:
-                                      NetworkImage(character.image))
-                              : const Icon(Icons.history, color: Colors.grey),
+                                      NetworkImage(character.image),
+                                )
+                              : null,
                           onTap: () {
                             _selectSearchResult(character.name);
                           },
@@ -170,27 +192,35 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Rick and Morty Explorer"),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.favorite, color: Colors.red),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const FavoritesPage()),
-              );
-            },
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          _buildSearchAndFilter(),
-          _buildMenuButtons(),
-          Expanded(child: _buildContent()),
-        ],
+    return GestureDetector(
+      onTap: () {
+        // Quita el foco del TextField y cierra el teclado
+        FocusScope.of(context).unfocus();
+      },
+      behavior: HitTestBehavior.opaque, // Captura toques en toda la pantalla
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text("Rick and Morty Explorer"),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.favorite, color: Colors.red),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const FavoritesPage()),
+                );
+              },
+            ),
+          ],
+        ),
+        body: Column(
+          children: [
+            _buildSearchAndFilter(),
+            _buildMenuButtons(),
+            Expanded(child: _buildContent()),
+          ],
+        ),
       ),
     );
   }
@@ -336,6 +366,12 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _performSearch(String query) {
+    if (query.isNotEmpty) {
+      _prefsHelper.saveLastSearch(query);
+      setState(() {
+        _lastSearch = query;
+      });
+    }
     switch (_selectedIndex) {
       case 0:
         context.read<SearchCharactersCubit>().searchCharacters(query);
