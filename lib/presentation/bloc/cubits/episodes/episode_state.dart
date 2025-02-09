@@ -11,12 +11,10 @@ class EpisodeInitial extends EpisodeState {}
 class EpisodeLoading extends EpisodeState {}
 
 class EpisodeLoaded extends EpisodeState {
-  final List<String> episodeNames;
   final List<EpisodeEntity> episodes;
 
-  EpisodeLoaded({required this.episodeNames, required this.episodes});
+  EpisodeLoaded(this.episodes);
 }
-
 
 class EpisodeError extends EpisodeState {
   final String message;

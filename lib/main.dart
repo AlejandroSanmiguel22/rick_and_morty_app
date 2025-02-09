@@ -12,12 +12,14 @@ import 'package:rick_and_morty/domain/repositories/location_repository.dart';
 import 'package:rick_and_morty/domain/repositories/resident_repository.dart';
 import 'package:rick_and_morty/presentation/bloc/cubits/characters/character_cubit.dart';
 import 'package:rick_and_morty/presentation/bloc/cubits/episodes/episode_cubit.dart';
+import 'package:rick_and_morty/presentation/bloc/cubits/episodes/episode_name_cubit.dart';
 import 'package:rick_and_morty/presentation/bloc/cubits/favorites_cubit.dart';
 import 'package:rick_and_morty/presentation/bloc/cubits/locations/location_cubit.dart';
 import 'package:rick_and_morty/data/repositories/character_repository_impl.dart';
 import 'package:rick_and_morty/data/datasources/remote/character_remote_datasource.dart';
 import 'package:rick_and_morty/core/network/api_client.dart';
 import 'package:get_it/get_it.dart';
+import 'package:rick_and_morty/presentation/bloc/cubits/residents/resident_cubit.dart';
 import 'package:rick_and_morty/presentation/pages/home_page.dart';
 
 void main() {
@@ -62,10 +64,13 @@ class MyApp extends StatelessWidget {
                 ..fetchCharacters(),
         ),
         BlocProvider(
-          create: (context) => EpisodeCubit(
-            episodeRepository: GetIt.I<EpisodeRepository>(),
-          ),
-        ),
+            create: (context) => EpisodeCubit(
+                  episodeRepository: GetIt.I<EpisodeRepository>(),
+                )..fetchEpisodes()),
+        BlocProvider(
+            create: (context) => EpisodeNameCubit(
+                  episodeRepository: GetIt.I<EpisodeRepository>(),
+                )),
         BlocProvider(
           create: (context) => FavoritesCubit()..loadFavorites(),
         ),
@@ -73,6 +78,10 @@ class MyApp extends StatelessWidget {
           create: (context) =>
               LocationCubit(locationRepository: GetIt.I<LocationRepository>())
                 ..fetchLocations(),
+        ),
+        BlocProvider(
+          create: (context) =>
+              ResidentCubit(residentRepository: GetIt.I<ResidentRepository>()),
         ),
       ],
       child: MaterialApp(

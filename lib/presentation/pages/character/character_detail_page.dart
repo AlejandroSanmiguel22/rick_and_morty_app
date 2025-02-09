@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:rick_and_morty/presentation/bloc/cubits/episodes/episode_cubit.dart';
+import 'package:rick_and_morty/presentation/bloc/cubits/episodes/episode_name_cubit.dart';
+import 'package:rick_and_morty/presentation/bloc/cubits/episodes/episode_name_state.dart';
 import 'package:rick_and_morty/presentation/bloc/cubits/episodes/episode_state.dart';
 import '../../../domain/entities/character_entity.dart';
 import '../../bloc/cubits/favorites_cubit.dart';
@@ -13,7 +15,7 @@ class CharacterDetailPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
 
-    BlocProvider.of<EpisodeCubit>(context).fetchEpisodesName(character.episode);
+    BlocProvider.of<EpisodeNameCubit>(context).fetchEpisodesName(character.episode);
 
     return Scaffold(
       appBar: AppBar(
@@ -62,18 +64,18 @@ class CharacterDetailPage extends StatelessWidget {
               "Apariciones en episodios:",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-            BlocBuilder<EpisodeCubit, EpisodeState>(
+            BlocBuilder<EpisodeNameCubit, EpisodeNameState>(
               builder: (context, state) {
-                if (state is EpisodeLoading) {
+                if (state is EpisodeNameLoading) {
                   return const CircularProgressIndicator();
-                } else if (state is EpisodeLoaded) {
+                } else if (state is EpisodeLoadedName) {
                   return Column(
-                    children: state.episodeNames!
+                    children: state.episodeNames
                         .map((ep) =>
                             Text(ep, style: const TextStyle(fontSize: 16)))
                         .toList(),
                   );
-                } else if (state is EpisodeError) {
+                } else if (state is EpisodeNameError) {
                   return Text(state.message);
                 }
                 return const SizedBox.shrink();

@@ -12,13 +12,6 @@ class EpisodeListPage extends StatelessWidget {
     return Scaffold(
       body: BlocBuilder<EpisodeCubit, EpisodeState>(
         builder: (context, state) {
-          // 🔥 Se asegura de cargar los episodios si no hay datos
-          if (state is EpisodeInitial ||
-              (state is EpisodeLoaded && state.episodes.isEmpty)) {
-            context.read<EpisodeCubit>().fetchEpisodes();
-            return const Center(child: CircularProgressIndicator());
-          }
-
           if (state is EpisodeLoading) {
             return const Center(child: CircularProgressIndicator());
           } else if (state is EpisodeLoaded) {
@@ -36,10 +29,7 @@ class EpisodeListPage extends StatelessWidget {
                         builder: (context) =>
                             EpisodeDetailPage(episode: episode),
                       ),
-                    ).then((_) {
-                      // 🔥 Cuando el usuario regresa, recargamos los episodios
-                      context.read<EpisodeCubit>().fetchEpisodes();
-                    });
+                    );
                   },
                 );
               },
