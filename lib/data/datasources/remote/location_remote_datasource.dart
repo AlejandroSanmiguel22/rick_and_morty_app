@@ -46,7 +46,7 @@ class LocationRemoteDataSource {
       return results.map((e) => LocationModel.fromJson(e)).toList();
     } on DioException catch (e) {
       if (e.response?.statusCode == 404) {
-        return []; // Devuelve lista vacía si no hay resultados
+        return []; 
       }
       throw Exception('Error al buscar ubicaciones');
     }

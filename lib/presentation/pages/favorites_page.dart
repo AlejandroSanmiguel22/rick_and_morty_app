@@ -54,9 +54,9 @@ class FavoritesPage extends StatelessWidget {
                 return CustomCard(
                   title: favorite["name"],
                   imageUrl: favorite["image"],
-                  width: 180, // 🔥 Puedes definir el tamaño
+                  width: 180, 
                   height:
-                      310, // 🔥 O dejarlo con el valor predeterminado (160.0)
+                      310,
                   onDelete: () {
                     BlocProvider.of<FavoritesCubit>(context)
                         .toggleFavorite(favorite);

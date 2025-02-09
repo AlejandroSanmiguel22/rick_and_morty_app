@@ -30,7 +30,7 @@ class SearchEpisodeCubit extends Cubit<SearchEpisodeState> {
     try {
       final suggestions = await episodeRepository.suggestEpisodes(query);
       emit(SearchEpisodeSuggested(
-          suggestions)); // Asegúrate de que se emite el estado correcto
+          suggestions)); 
     } catch (e) {
       emit(SearchEpisodeError(e.toString()));
     }

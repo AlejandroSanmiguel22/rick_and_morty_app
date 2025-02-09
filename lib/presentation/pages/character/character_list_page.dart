@@ -20,10 +20,10 @@ class CharacterListPage extends StatelessWidget {
               padding: const EdgeInsets.all(10),
               child: GridView.builder(
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2, // ✅ Dos columnas
+                  crossAxisCount: 2, 
                   crossAxisSpacing: 10,
                   mainAxisSpacing: 10,
-                  childAspectRatio: 0.8, // ✅ Ajuste de tamaño para mejor apariencia
+                  childAspectRatio: 0.8, 
                 ),
                 itemCount: state.characters.length,
                 itemBuilder: (context, index) {

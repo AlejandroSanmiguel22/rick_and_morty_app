@@ -23,7 +23,7 @@ class FavoritesCubit extends Cubit<List<Map<String, dynamic>>> {
     }
 
     await prefs.setStringList("favorites", favorites);
-    loadFavorites(); // Recarga la lista de favoritos
+    loadFavorites();
   }
 
   bool isFavorite(int characterId) {

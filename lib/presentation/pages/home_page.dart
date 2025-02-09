@@ -61,14 +61,10 @@ class _HomePageState extends State<HomePage> {
   void _onPageChanged(int index) {
     setState(() {
       _selectedIndex = index;
-
-      // Restablecer los filtros al cambiar de página
       if (_selectedIndex == 0) {
-        // Personajes
         selectedStatus.clear();
         selectedGender.clear();
       } else if (_selectedIndex == 1) {
-        // Ubicaciones
         selectedType.clear();
         selectedDimension.clear();
       }
@@ -81,7 +77,7 @@ class _HomePageState extends State<HomePage> {
       _searchController.text = query;
       _lastSearch = query;
     });
-    _performSearch(query); // Realiza la búsqueda con el query seleccionado
+    _performSearch(query);
     _removeOverlay();
   }
 
@@ -122,7 +118,7 @@ class _HomePageState extends State<HomePage> {
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
+                      color: const Color.fromRGBO(0, 0, 0, 0.117),
                       blurRadius: 10,
                       spreadRadius: 2,
                     ),
@@ -287,10 +283,9 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        // Quita el foco del TextField y cierra el teclado
         FocusScope.of(context).unfocus();
       },
-      behavior: HitTestBehavior.opaque, // Captura toques en toda la pantalla
+      behavior: HitTestBehavior.opaque, 
       child: Scaffold(
         appBar: AppBar(
           title: const Text("Rick and Morty Explorer"),
@@ -341,12 +336,12 @@ class _HomePageState extends State<HomePage> {
                         ? IconButton(
                             icon: const Icon(Icons.clear),
                             onPressed: () {
-                              _searchController.clear(); // Borra el texto
+                              _searchController.clear(); 
                               FocusScope.of(context)
-                                  .unfocus(); // Inactiva el campo
-                              setState(() {}); // Actualiza la UI
+                                  .unfocus(); 
+                              setState(() {});
                               _performSearch(
-                                  ""); // Vuelve a mostrar todos los personajes
+                                  ""); 
                             },
                           )
                         : null,
@@ -359,7 +354,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                   onChanged: (value) {
-                    setState(() {}); // Para mostrar/ocultar el botón "X"
+                    setState(() {}); 
                     _suggestSearch(value);
                     if (_overlayEntry == null) _showOverlay(context);
                   },
@@ -718,7 +713,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // Widget para mostrar checkboxes en una sola fila
   Widget _buildCheckboxRow(
     List<String> options,
     List<String> selectedFilters,
@@ -754,7 +748,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // Botón de opciones (Limpiar / Aplicar)
   Widget _buildOptionButton(String title, Color color, VoidCallback onPressed) {
     return Expanded(
       child: Padding(
@@ -779,7 +772,7 @@ class _HomePageState extends State<HomePage> {
 
   void _applyFilters() {
     switch (_selectedIndex) {
-      case 0: // Personajes
+      case 0:
         context.read<SearchCharactersCubit>().searchCharacters(
               _searchController.text,
               status:
@@ -788,7 +781,7 @@ class _HomePageState extends State<HomePage> {
                   selectedGender.isNotEmpty ? selectedGender.join(',') : null,
             );
         break;
-      case 1: // Ubicaciones
+      case 1: 
         context.read<SearchLocationsCubit>().searchLocations(
               _searchController.text,
               type: selectedType.isNotEmpty ? selectedType.join(',') : null,
@@ -797,9 +790,9 @@ class _HomePageState extends State<HomePage> {
                   : null,
             );
         break;
-      case 2: // Episodios
+      case 2: 
         List<String> seasonFilters = selectedType.map((season) {
-          return "S${season.substring(1).padLeft(2, '0')}"; // Convierte "S1" en "S01"
+          return "S${season.substring(1).padLeft(2, '0')}"; 
         }).toList();
 
         context.read<SearchEpisodeCubit>().searchEpisodes(
@@ -808,7 +801,7 @@ class _HomePageState extends State<HomePage> {
                   : null,
               episodes: seasonFilters.isNotEmpty
                   ? seasonFilters
-                  : null, // Ahora acepta múltiples temporadas
+                  : null, 
             );
         break;
     }

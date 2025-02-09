@@ -1,5 +1,4 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:rick_and_morty/domain/entities/character_entity.dart';
 import 'package:rick_and_morty/domain/repositories/resident_repository.dart';
 import 'package:rick_and_morty/presentation/bloc/cubits/residents/resident_state.dart';
 

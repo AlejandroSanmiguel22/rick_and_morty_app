@@ -52,7 +52,7 @@ class CharacterDetailPage extends StatelessWidget {
               decoration: BoxDecoration(
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
+                    color: const Color.fromRGBO(0, 0, 0, 0.117),
                     blurRadius: 10,
                     spreadRadius: 2,
                     offset: const Offset(0, 4),

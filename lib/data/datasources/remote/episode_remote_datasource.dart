@@ -1,4 +1,3 @@
-import 'package:dio/dio.dart';
 import 'package:rick_and_morty/core/network/api_client.dart';
 import 'package:rick_and_morty/data/models/episode_model.dart';
 
@@ -37,12 +36,12 @@ class EpisodeRemoteDataSource {
     try {
       final response = await apiClient.dio.get(
         "https://rickandmortyapi.com/api/episode/",
-        queryParameters: {"name": query}, // Debe ser "name"
+        queryParameters: {"name": query}, 
       );
       final List results = response.data['results'];
       return results.map((e) => EpisodeModel.fromJson(e)).toList();
     } catch (e) {
-      return []; // Retorna una lista vacía en lugar de lanzar error
+      return []; 
     }
   }
 
@@ -54,7 +53,7 @@ class EpisodeRemoteDataSource {
         queryParameters: {
           if (name != null && name.isNotEmpty) "name": name,
           if (episodes != null && episodes.isNotEmpty)
-            "episode": episodes.join(','), // Unimos múltiples temporadas
+            "episode": episodes.join(','), 
         },
       );
       print(

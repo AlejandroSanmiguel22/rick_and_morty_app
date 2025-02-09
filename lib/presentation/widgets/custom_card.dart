@@ -46,7 +46,7 @@ class CustomCard extends StatelessWidget {
                       imageUrl!,
                       width: double.infinity,
                       height: height *
-                          0.5, // 🔥 Se ajusta dinámicamente a la mitad del height
+                          0.5, 
                       fit: BoxFit.cover,
                     ),
                   )

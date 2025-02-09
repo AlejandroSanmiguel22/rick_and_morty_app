@@ -41,7 +41,7 @@ class LocationListPage extends StatelessWidget {
                         ),
                       );
                     },
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), // ✅ Bordes redondeados
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), 
                   );
                 },
               ),
