@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:rick_and_morty/core/usecases/shared_prefs_helper.dart';
 import 'package:rick_and_morty/domain/entities/character_entity.dart';
+import 'package:rick_and_morty/domain/entities/location_entity.dart';
 import 'package:rick_and_morty/presentation/bloc/cubits/characters/search_characters_cubit.dart';
+import 'package:rick_and_morty/presentation/bloc/cubits/locations/search_locations_cubit.dart';
 import 'package:rick_and_morty/presentation/pages/character/character_detail_page.dart';
 import 'package:rick_and_morty/presentation/pages/character/character_list_page.dart';
 import 'package:rick_and_morty/presentation/pages/episode/episode_list_page.dart';
 import 'package:rick_and_morty/presentation/pages/favorites_page.dart';
+import 'package:rick_and_morty/presentation/pages/location/location_detail_page.dart';
 import 'package:rick_and_morty/presentation/pages/location/location_list_page.dart';
 
 class HomePage extends StatefulWidget {
@@ -24,8 +27,10 @@ class _HomePageState extends State<HomePage> {
   String _lastSearch = "";
   bool _isSearching = false;
 
-  List<String> selectedStatus = []; // Estado global para filtros
-  List<String> selectedGender = []; // Estado global para filtros
+  List<String> selectedStatus = [];
+  List<String> selectedGender = [];
+  List<String> selectedType = [];
+  List<String> selectedDimension = [];
 
   final List<Widget> _pages = [
     const CharacterListPage(),
@@ -46,6 +51,23 @@ class _HomePageState extends State<HomePage> {
         _lastSearch = lastSearch;
       });
     }
+  }
+
+  void _onPageChanged(int index) {
+    setState(() {
+      _selectedIndex = index;
+
+      // Restablecer los filtros al cambiar de página
+      if (_selectedIndex == 0) {
+        // Personajes
+        selectedStatus.clear();
+        selectedGender.clear();
+      } else if (_selectedIndex == 1) {
+        // Ubicaciones
+        selectedType.clear();
+        selectedDimension.clear();
+      }
+    });
   }
 
   void _selectSearchResult(String query) {
@@ -99,91 +121,9 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ],
                 ),
-                child:
-                    BlocBuilder<SearchCharactersCubit, SearchCharactersState>(
-                  builder: (context, state) {
-                    List<CharacterEntity> suggestions = [];
-
-                    if (state is SearchCharactersSuggested) {
-                      suggestions = state.suggestions;
-                    }
-
-                    // Si no hay sugerencias y hay un historial de búsqueda, mostrarlo como historial
-                    if (suggestions.isEmpty && _lastSearch.isNotEmpty) {
-                      return ListView(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        shrinkWrap: true,
-                        children: [
-                          ListTile(
-                            title: Text(
-                              _lastSearch,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.grey,
-                              ),
-                            ),
-                            leading:
-                                const Icon(Icons.history, color: Colors.grey),
-                            onTap: () {
-                              _selectSearchResult(_lastSearch);
-                            },
-                          ),
-                        ],
-                      );
-                    }
-
-                    if (suggestions.isEmpty) {
-                      return const Padding(
-                        padding: EdgeInsets.all(16),
-                        child: Center(
-                          child: Text(
-                            "No hay sugerencias",
-                            style: TextStyle(color: Colors.grey),
-                          ),
-                        ),
-                      );
-                    }
-
-                    return ListView.separated(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      shrinkWrap: true,
-                      itemCount: suggestions.length,
-                      separatorBuilder: (_, __) =>
-                          const Divider(height: 1, thickness: 0.5),
-                      itemBuilder: (context, index) {
-                        final character = suggestions[index];
-                        return ListTile(
-                          title: Text(
-                            character.name,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          subtitle: character.status.isNotEmpty
-                              ? Text(
-                                  character.status,
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey,
-                                  ),
-                                )
-                              : null,
-                          leading: character.image.isNotEmpty
-                              ? CircleAvatar(
-                                  backgroundImage:
-                                      NetworkImage(character.image),
-                                )
-                              : null,
-                          onTap: () {
-                            _selectSearchResult(character.name);
-                          },
-                        );
-                      },
-                    );
-                  },
-                ),
+                child: _selectedIndex == 0
+                    ? _buildCharacterSuggestions() // Para personajes
+                    : _buildLocationSuggestions(), // Para ubicaciones
               ),
             ),
           ),
@@ -191,6 +131,107 @@ class _HomePageState extends State<HomePage> {
       ),
     );
     Overlay.of(context).insert(_overlayEntry!);
+  }
+
+  Widget _buildCharacterSuggestions() {
+    return BlocBuilder<SearchCharactersCubit, SearchCharactersState>(
+      builder: (context, state) {
+        List<CharacterEntity> suggestions = [];
+
+        if (state is SearchCharactersSuggested) {
+          suggestions = state.suggestions;
+        }
+
+        if (suggestions.isEmpty && _lastSearch.isNotEmpty) {
+          return _buildLastSearchTile(_lastSearch);
+        }
+
+        if (suggestions.isEmpty) {
+          return _buildNoSuggestionsMessage();
+        }
+
+        return ListView.separated(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          shrinkWrap: true,
+          itemCount: suggestions.length,
+          separatorBuilder: (_, __) => const Divider(height: 1, thickness: 0.5),
+          itemBuilder: (context, index) {
+            final character = suggestions[index];
+            return ListTile(
+              title: Text(character.name),
+              subtitle:
+                  character.status.isNotEmpty ? Text(character.status) : null,
+              leading: character.image.isNotEmpty
+                  ? CircleAvatar(backgroundImage: NetworkImage(character.image))
+                  : null,
+              onTap: () => _selectSearchResult(character.name),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildLocationSuggestions() {
+    return BlocBuilder<SearchLocationsCubit, SearchLocationsState>(
+      builder: (context, state) {
+        List<LocationEntity> suggestions = [];
+
+        if (state is SearchLocationsSuggested) {
+          suggestions = state.suggestions;
+        }
+
+        if (suggestions.isEmpty && _lastSearch.isNotEmpty) {
+          return _buildLastSearchTile(_lastSearch);
+        }
+
+        if (suggestions.isEmpty) {
+          return _buildNoSuggestionsMessage();
+        }
+
+        return ListView.separated(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          shrinkWrap: true,
+          itemCount: suggestions.length,
+          separatorBuilder: (_, __) => const Divider(height: 1, thickness: 0.5),
+          itemBuilder: (context, index) {
+            final location = suggestions[index];
+            return ListTile(
+              title: Text(location.name),
+              subtitle: Text("Dimensión: ${location.dimension}"),
+              onTap: () => _selectSearchResult(location.name),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildLastSearchTile(String query) {
+    return ListView(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      shrinkWrap: true,
+      children: [
+        ListTile(
+          title: Text(
+            query,
+            style: const TextStyle(
+                fontSize: 16, fontWeight: FontWeight.w500, color: Colors.grey),
+          ),
+          leading: const Icon(Icons.history, color: Colors.grey),
+          onTap: () => _selectSearchResult(query),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNoSuggestionsMessage() {
+    return const Padding(
+      padding: EdgeInsets.all(16),
+      child: Center(
+        child: Text("No hay sugerencias", style: TextStyle(color: Colors.grey)),
+      ),
+    );
   }
 
   @override
@@ -294,83 +335,131 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildMenuButtons() {
-  return Row(
-    mainAxisAlignment: MainAxisAlignment.spaceAround,
-    children: [
-      _buildOption("Personajes", 0),
-      _buildOption("Ubicaciones", 1),
-      _buildOption("Episodios", 2),
-    ],
-  );
-}
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: [
+        _buildOption("Personajes", 0),
+        _buildOption("Ubicaciones", 1),
+        _buildOption("Episodios", 2),
+      ],
+    );
+  }
 
-Widget _buildOption(String title, int index) {
-  bool isSelected = _selectedIndex == index;
+  Widget _buildOption(String title, int index) {
+    bool isSelected = _selectedIndex == index;
 
-  return ElevatedButton(
-    style: ElevatedButton.styleFrom(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
+    return ElevatedButton(
+      style: ElevatedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+        backgroundColor: isSelected
+            ? Colors.blue
+            : Colors.grey[300], // Color activo/inactivo
+        foregroundColor:
+            isSelected ? Colors.white : Colors.black, // Color del texto
       ),
-      backgroundColor: isSelected ? Colors.blue : Colors.grey[300], // Color activo/inactivo
-      foregroundColor: isSelected ? Colors.white : Colors.black, // Color del texto
-    ),
-    onPressed: () {
-      setState(() {
-        _selectedIndex = index;
-      });
-    },
-    child: Text(title),
-  );
-}
-
+      onPressed: () {
+        setState(() {
+          _selectedIndex = index;
+        });
+      },
+      child: Text(title),
+    );
+  }
 
   Widget _buildContent() {
     return Expanded(
       child: IndexedStack(
         index: _selectedIndex,
         children: _pages.map((page) {
-          return BlocBuilder<SearchCharactersCubit, SearchCharactersState>(
-            builder: (context, state) {
-              if (state is SearchCharactersLoading) {
-                return const Center(child: CircularProgressIndicator());
-              } else if (state is SearchCharactersLoaded) {
-                return ListView.builder(
-                  itemCount: state.characters.length,
-                  itemBuilder: (context, index) {
-                    final character = state.characters[index];
-                    return ListTile(
-                      leading: Image.network(character.image),
-                      title: Text(character.name),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(character.species),
-                          Text(character.status),
-                          Text(character.origin),
-                        ],
-                      ),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                CharacterDetailPage(character: character),
-                          ),
-                        );
-                      },
-                    );
-                  },
-                );
-              } else if (state is SearchCharactersEmpty) {
-                return const Center(child: Text("No se encontraron resultados"));
-              } else if (state is SearchCharactersError) {
-                return Center(child: Text(state.message));
-              }
-              return page;
-            },
-          );
+          if (_selectedIndex == 0) {
+            // Personajes
+            return BlocBuilder<SearchCharactersCubit, SearchCharactersState>(
+              builder: (context, state) {
+                if (state is SearchCharactersLoading) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (state is SearchCharactersLoaded) {
+                  return ListView.builder(
+                    itemCount: state.characters.length,
+                    itemBuilder: (context, index) {
+                      final character = state.characters[index];
+                      return ListTile(
+                        leading: Image.network(character.image),
+                        title: Text(character.name),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(character.species),
+                            Text(character.status),
+                            Text(character.origin),
+                          ],
+                        ),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  CharacterDetailPage(character: character),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  );
+                } else if (state is SearchCharactersEmpty) {
+                  return const Center(
+                      child: Text("No se encontraron personajes"));
+                } else if (state is SearchCharactersError) {
+                  return Center(child: Text(state.message));
+                }
+                return page;
+              },
+            );
+          } else if (_selectedIndex == 1) {
+            // Ubicaciones
+            return BlocBuilder<SearchLocationsCubit, SearchLocationsState>(
+              builder: (context, state) {
+                if (state is SearchLocationsLoading) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (state is SearchLocationsLoaded) {
+                  return ListView.builder(
+                    itemCount: state.locations.length,
+                    itemBuilder: (context, index) {
+                      final location = state.locations[index];
+                      return ListTile(
+                        title: Text(location.name),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text("Tipo: ${location.type}"),
+                            Text("Dimensión: ${location.dimension}"),
+                          ],
+                        ),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  LocationDetailPage(location: location),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  );
+                } else if (state is SearchLocationsEmpty) {
+                  return const Center(
+                      child: Text("No se encontraron ubicaciones"));
+                } else if (state is SearchLocationsError) {
+                  return Center(child: Text(state.message));
+                }
+                return page;
+              },
+            );
+          }
+          return page;
         }).toList(),
       ),
     );
@@ -385,15 +474,22 @@ Widget _buildOption(String title, int index) {
     }
     switch (_selectedIndex) {
       case 0:
-        context.read<SearchCharactersCubit>().searchCharacters(query,
-            status: selectedStatus.isNotEmpty ? selectedStatus.join(',') : null,
-            gender: selectedGender.isNotEmpty ? selectedGender.join(',') : null);
+        context.read<SearchCharactersCubit>().searchCharacters(
+              query,
+              status:
+                  selectedStatus.isNotEmpty ? selectedStatus.join(',') : null,
+              gender:
+                  selectedGender.isNotEmpty ? selectedGender.join(',') : null,
+            );
         break;
       case 1:
-        // context.read<SearchLocationsCubit>().searchLocations(query);
-        break;
-      case 2:
-        // context.read<SearchEpisodesCubit>().searchEpisodes(query);
+        context.read<SearchLocationsCubit>().searchLocations(
+              query,
+              type: selectedType.isNotEmpty ? selectedType.join(',') : null,
+              dimension: selectedDimension.isNotEmpty
+                  ? selectedDimension.join(',')
+                  : null,
+            );
         break;
     }
   }
@@ -404,7 +500,7 @@ Widget _buildOption(String title, int index) {
         context.read<SearchCharactersCubit>().suggestCharacters(query);
         break;
       case 1:
-        // context.read<SearchLocationsCubit>().suggestLocations(query);
+        context.read<SearchLocationsCubit>().suggestLocations(query);
         break;
       case 2:
         // context.read<SearchEpisodesCubit>().suggestEpisodes(query);
@@ -436,46 +532,59 @@ Widget _buildOption(String title, int index) {
                 children: [
                   const Text(
                     "Filtrar Resultados",
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   const Divider(thickness: 1.2),
                   const SizedBox(height: 10),
-
-                  // Sección de Estado
-                  const Text(
-                    "Estado",
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  _buildCheckboxRow(
-                    ["Vivo", "Muerto", "Desconocido"],
-                    selectedStatus,
-                    setModalState,
-                  ),
+                  if (_selectedIndex == 0) ...[
+                    const Text(
+                      "Estado",
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    _buildCheckboxRow(["Vivo", "Muerto", "Desconocido"],
+                        selectedStatus, setModalState),
+                    const SizedBox(height: 12),
+                    const Text(
+                      "Sexo",
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    _buildCheckboxRow(["Hombre", "Mujer", "Sin género"],
+                        selectedGender, setModalState),
+                  ],
+                  if (_selectedIndex == 1) ...[
+                    const Text(
+                      "Tipo",
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    _buildCheckboxRow(
+                        ["Planeta", "Estación Espacial", "Microverso"],
+                        selectedType,
+                        setModalState),
+                    const SizedBox(height: 12),
+                    const Text(
+                      "Dimensión",
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    _buildCheckboxRow(["C-137", "Cronenberg", "Desconocida"],
+                        selectedDimension, setModalState),
+                  ],
                   const SizedBox(height: 12),
-
-                  // Sección de Género
-                  const Text(
-                    "Sexo",
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  _buildCheckboxRow(
-                    ["Hombre", "Mujer", "Sin género"],
-                    selectedGender,
-                    setModalState,
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Opciones en una sola fila
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       _buildOptionButton("Limpiar", Colors.grey, () {
                         setModalState(() {
-                          selectedStatus.clear();
-                          selectedGender.clear();
+                          if (_selectedIndex == 0) {
+                            selectedStatus.clear();
+                            selectedGender.clear();
+                          } else {
+                            selectedType.clear();
+                            selectedDimension.clear();
+                          }
                         });
                       }),
                       _buildOptionButton("Aplicar", Colors.green, () {
@@ -484,7 +593,6 @@ Widget _buildOption(String title, int index) {
                       }),
                     ],
                   ),
-
                   const SizedBox(height: 45),
                 ],
               ),
@@ -551,11 +659,25 @@ Widget _buildOption(String title, int index) {
   }
 
   void _applyFilters() {
-    print("Filtros aplicados - Estado: $selectedStatus, Género: $selectedGender");
-    context.read<SearchCharactersCubit>().searchCharacters(
-          _searchController.text,
-          status: selectedStatus.isNotEmpty ? selectedStatus.join(',') : null,
-          gender: selectedGender.isNotEmpty ? selectedGender.join(',') : null,
-        );
+    switch (_selectedIndex) {
+      case 0:
+        context.read<SearchCharactersCubit>().searchCharacters(
+              _searchController.text,
+              status:
+                  selectedStatus.isNotEmpty ? selectedStatus.join(',') : null,
+              gender:
+                  selectedGender.isNotEmpty ? selectedGender.join(',') : null,
+            );
+        break;
+      case 1:
+        context.read<SearchLocationsCubit>().searchLocations(
+              _searchController.text,
+              type: selectedType.isNotEmpty ? selectedType.join(',') : null,
+              dimension: selectedDimension.isNotEmpty
+                  ? selectedDimension.join(',')
+                  : null,
+            );
+        break;
+    }
   }
 }

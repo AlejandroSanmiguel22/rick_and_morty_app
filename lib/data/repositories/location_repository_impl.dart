@@ -17,4 +17,16 @@ class LocationRepositoryImpl implements LocationRepository {
       return Left('Error al obtener ubicaciones');
     }
   }
+
+  @override
+  Future<List<LocationEntity>> suggestLocations(String query) async {
+    return await remoteDataSource.suggestLocations(query);
+  }
+
+  @override
+  Future<List<LocationEntity>> searchLocations(String query, {String? type, String? dimension}) async {
+    final locations = await remoteDataSource.searchLocations(query, type: type, dimension: dimension);
+    print(locations);
+    return locations;
+  }
 }

@@ -20,6 +20,7 @@ import 'package:rick_and_morty/data/repositories/character_repository_impl.dart'
 import 'package:rick_and_morty/data/datasources/remote/character_remote_datasource.dart';
 import 'package:rick_and_morty/core/network/api_client.dart';
 import 'package:get_it/get_it.dart';
+import 'package:rick_and_morty/presentation/bloc/cubits/locations/search_locations_cubit.dart';
 import 'package:rick_and_morty/presentation/bloc/cubits/residents/resident_cubit.dart';
 import 'package:rick_and_morty/presentation/pages/home_page.dart';
 
@@ -91,6 +92,12 @@ class MyApp extends StatelessWidget {
         BlocProvider(
           create: (context) => SearchCharactersCubit(
             GetIt.I<CharacterRepository>(),
+          ),
+        ),
+
+         BlocProvider(
+          create: (context) => SearchLocationsCubit(
+            GetIt.I<LocationRepository>(),
           ),
         ),
       ],
