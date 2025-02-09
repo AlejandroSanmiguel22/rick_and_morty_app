@@ -1,0 +1,19 @@
+import 'package:dartz/dartz.dart';
+import '../../domain/repositories/episode_repository.dart';
+import '../datasources/remote/episode_remote_datasource.dart';
+
+class EpisodeRepositoryImpl implements EpisodeRepository {
+  final EpisodeRemoteDataSource remoteDataSource;
+
+  EpisodeRepositoryImpl({required this.remoteDataSource});
+
+  @override
+  Future<Either<String, List<String>>> getEpisodeNames(List<String> episodeUrls) async {
+    try {
+      final episodes = await remoteDataSource.getEpisodeNames(episodeUrls);
+      return Right(episodes);
+    } catch (e) {
+      return Left('Error al obtener episodios');
+    }
+  }
+}
