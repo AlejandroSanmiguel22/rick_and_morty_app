@@ -20,8 +20,16 @@ class CharacterRepositoryImpl implements CharacterRepository {
   }
 
   @override
-  Future<List<CharacterEntity>> searchCharacters(String query) async {
-    final results = await remoteDataSource.searchCharacters(query);
-    return results.map((json) => CharacterModel.fromJson(json)).toList();
+  Future<List<CharacterEntity>> suggestCharacters(String query) async {
+    return await remoteDataSource.suggestCharacters(query);
+  }
+
+  @override
+  Future<List<CharacterEntity>> searchCharacters(String query, String? status, String? gender) async {
+    final characters = await remoteDataSource.searchCharacters(query,
+        status: status, gender: gender);
+
+    print(characters);
+    return characters;
   }
 }

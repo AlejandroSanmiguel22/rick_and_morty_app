@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:rick_and_morty/core/usecases/shared_prefs_helper.dart';
 import 'package:rick_and_morty/domain/entities/character_entity.dart';
 import 'package:rick_and_morty/presentation/bloc/cubits/characters/search_characters_cubit.dart';
+import 'package:rick_and_morty/presentation/pages/character/character_detail_page.dart';
 import 'package:rick_and_morty/presentation/pages/character/character_list_page.dart';
 import 'package:rick_and_morty/presentation/pages/episode/episode_list_page.dart';
 import 'package:rick_and_morty/presentation/pages/favorites_page.dart';
@@ -22,6 +23,9 @@ class _HomePageState extends State<HomePage> {
   OverlayEntry? _overlayEntry;
   String _lastSearch = "";
   bool _isSearching = false;
+
+  List<String> selectedStatus = []; // Estado global para filtros
+  List<String> selectedGender = []; // Estado global para filtros
 
   final List<Widget> _pages = [
     const CharacterListPage(),
@@ -52,7 +56,6 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _removeOverlay() {
-
     _overlayEntry?.remove();
     _overlayEntry = null;
     setState(() {
@@ -244,6 +247,19 @@ class _HomePageState extends State<HomePage> {
                   decoration: InputDecoration(
                     hintText: placeholder,
                     prefixIcon: const Icon(Icons.search),
+                    suffixIcon: _searchController.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () {
+                              _searchController.clear(); // Borra el texto
+                              FocusScope.of(context)
+                                  .unfocus(); // Inactiva el campo
+                              setState(() {}); // Actualiza la UI
+                              _performSearch(
+                                  ""); // Vuelve a mostrar todos los personajes
+                            },
+                          )
+                        : null,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10.0),
                     ),
@@ -253,6 +269,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                   onChanged: (value) {
+                    setState(() {}); // Para mostrar/ocultar el botón "X"
                     _suggestSearch(value);
                     if (_overlayEntry == null) _showOverlay(context);
                   },
@@ -273,44 +290,6 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildSuggestions() {
-    return BlocBuilder<SearchCharactersCubit, SearchCharactersState>(
-      builder: (context, state) {
-        if (state is SearchCharactersSuggested &&
-            state.suggestions.isNotEmpty) {
-          return Container(
-            constraints: const BoxConstraints(
-              maxHeight: 200, // Limita el tamaño del contenedor de sugerencias
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            color: Colors.white,
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: state.suggestions.length,
-              itemBuilder: (context, index) {
-                final character = state.suggestions[index];
-                return ListTile(
-                  title: Text(character.name),
-                  subtitle: Text(character.status),
-                  leading: CircleAvatar(
-                    backgroundImage: NetworkImage(character.image),
-                  ),
-                  onTap: () {
-                    _selectSearchResult(character.name);
-                    setState(() {
-                      _isSearching = false;
-                    });
-                  },
-                );
-              },
-            ),
-          );
-        }
-        return const SizedBox.shrink();
-      },
     );
   }
 
@@ -337,31 +316,52 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildContent() {
-    return BlocBuilder<SearchCharactersCubit, SearchCharactersState>(
-      builder: (context, state) {
-        if (state is SearchCharactersLoading) {
-          return const Center(child: CircularProgressIndicator());
-        } else if (state is SearchCharactersLoaded) {
-          return ListView.builder(
-            itemCount: state.characters.length,
-            itemBuilder: (context, index) {
-              final character = state.characters[index];
-              return ListTile(
-                title: Text(character.name),
-                subtitle: Text(character.status),
-                leading: CircleAvatar(
-                  backgroundImage: NetworkImage(character.image),
-                ),
-              );
+    return Expanded(
+      child: IndexedStack(
+        index: _selectedIndex,
+        children: _pages.map((page) {
+          return BlocBuilder<SearchCharactersCubit, SearchCharactersState>(
+            builder: (context, state) {
+              if (state is SearchCharactersLoading) {
+                return const Center(child: CircularProgressIndicator());
+              } else if (state is SearchCharactersLoaded) {
+                return ListView.builder(
+                  itemCount: state.characters.length,
+                  itemBuilder: (context, index) {
+                    final character = state.characters[index];
+                    return ListTile(
+                      leading: Image.network(character.image),
+                      title: Text(character.name),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(character.species),
+                          Text(character.status),
+                          Text(character.origin),
+                        ],
+                      ),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                CharacterDetailPage(character: character),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                );
+              } else if (state is SearchCharactersEmpty) {
+                return const Center(child: Text("No se encontraron resultados"));
+              } else if (state is SearchCharactersError) {
+                return Center(child: Text(state.message));
+              }
+              return page;
             },
           );
-        } else if (state is SearchCharactersEmpty) {
-          return const Center(child: Text("No se encontraron resultados"));
-        } else if (state is SearchCharactersError) {
-          return Center(child: Text(state.message));
-        }
-        return _pages[_selectedIndex];
-      },
+        }).toList(),
+      ),
     );
   }
 
@@ -374,7 +374,9 @@ class _HomePageState extends State<HomePage> {
     }
     switch (_selectedIndex) {
       case 0:
-        context.read<SearchCharactersCubit>().searchCharacters(query);
+        context.read<SearchCharactersCubit>().searchCharacters(query,
+            status: selectedStatus.isNotEmpty ? selectedStatus.join(',') : null,
+            gender: selectedGender.isNotEmpty ? selectedGender.join(',') : null);
         break;
       case 1:
         // context.read<SearchLocationsCubit>().searchLocations(query);
@@ -403,78 +405,146 @@ class _HomePageState extends State<HomePage> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
-      isScrollControlled:
-          true, // Permite que el modal no ocupe toda la pantalla
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
-        String? selectedStatus;
-        String? selectedGender;
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+                left: 16,
+                right: 16,
+                top: 20,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Filtrar Resultados",
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const Divider(thickness: 1.2),
+                  const SizedBox(height: 10),
 
-        return Container(
-          padding: const EdgeInsets.all(16.0),
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height *
-                0.5, // Limita la altura al 50% de la pantalla
-          ),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  "Filtrar Resultados",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 10),
+                  // Sección de Estado
+                  const Text(
+                    "Estado",
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  _buildCheckboxRow(
+                    ["Vivo", "Muerto", "Desconocido"],
+                    selectedStatus,
+                    setModalState,
+                  ),
+                  const SizedBox(height: 12),
 
-                // Filtro de Estado
-                DropdownButtonFormField<String>(
-                  decoration: const InputDecoration(labelText: "Estado"),
-                  items: ["Vivo", "Muerto", "Desconocido"]
-                      .map((status) => DropdownMenuItem(
-                            value: status,
-                            child: Text(status),
-                          ))
-                      .toList(),
-                  onChanged: (value) => setState(() => selectedStatus = value),
-                ),
+                  // Sección de Género
+                  const Text(
+                    "Sexo",
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  _buildCheckboxRow(
+                    ["Hombre", "Mujer", "Sin género"],
+                    selectedGender,
+                    setModalState,
+                  ),
+                  const SizedBox(height: 12),
 
-                // Filtro de Género
-                DropdownButtonFormField<String>(
-                  decoration: const InputDecoration(labelText: "Género"),
-                  items: ["Hombre", "Mujer", "Sin género"]
-                      .map((gender) => DropdownMenuItem(
-                            value: gender,
-                            child: Text(gender),
-                          ))
-                      .toList(),
-                  onChanged: (value) => setState(() => selectedGender = value),
-                ),
+                  // Opciones en una sola fila
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _buildOptionButton("Limpiar", Colors.grey, () {
+                        setModalState(() {
+                          selectedStatus.clear();
+                          selectedGender.clear();
+                        });
+                      }),
+                      _buildOptionButton("Aplicar", Colors.green, () {
+                        Navigator.pop(context);
+                        _applyFilters();
+                      }),
+                    ],
+                  ),
 
-                const SizedBox(height: 10),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    _applyFilters(selectedStatus, selectedGender);
-                  },
-                  child: const Text("Aplicar Filtros"),
-                ),
-              ],
-            ),
-          ),
+                  const SizedBox(height: 45),
+                ],
+              ),
+            );
+          },
         );
       },
     );
   }
 
-  void _applyFilters(String? status, String? gender) {
-    switch (_selectedIndex) {
-      case 0:
-        context.read<SearchCharactersCubit>().searchCharacters(
-              _searchController.text,
-            );
-        break;
-    }
+  // Widget para mostrar checkboxes en una sola fila
+  Widget _buildCheckboxRow(
+    List<String> options,
+    List<String> selectedFilters,
+    Function(Function()) setModalState,
+  ) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: options.map((option) {
+        final isSelected = selectedFilters.contains(option);
+        return Row(
+          children: [
+            Checkbox(
+              value: isSelected,
+              activeColor: Colors.green, // Color cuando está seleccionado
+              onChanged: (bool? value) {
+                setModalState(() {
+                  if (value == true) {
+                    selectedFilters.add(option);
+                  } else {
+                    selectedFilters.remove(option);
+                  }
+                });
+              },
+            ),
+            Text(option, style: const TextStyle(fontSize: 16)),
+          ],
+        );
+      }).toList(),
+    );
+  }
+
+  // Botón de opciones (Limpiar / Aplicar)
+  Widget _buildOptionButton(String title, Color color, VoidCallback onPressed) {
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        child: ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            backgroundColor: color,
+          ),
+          onPressed: onPressed,
+          child: Text(
+            title,
+            style: const TextStyle(fontSize: 16, color: Colors.white),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _applyFilters() {
+    print("Filtros aplicados - Estado: $selectedStatus, Género: $selectedGender");
+    context.read<SearchCharactersCubit>().searchCharacters(
+          _searchController.text,
+          status: selectedStatus.isNotEmpty ? selectedStatus.join(',') : null,
+          gender: selectedGender.isNotEmpty ? selectedGender.join(',') : null,
+        );
   }
 }

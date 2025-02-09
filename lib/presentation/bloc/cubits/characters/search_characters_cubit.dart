@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:rick_and_morty/domain/entities/character_entity.dart';
@@ -5,12 +6,11 @@ import '../../../../domain/repositories/character_repository.dart';
 part 'search_characters_state.dart';
 
 class SearchCharactersCubit extends Cubit<SearchCharactersState> {
-  final CharacterRepository characterRepository;
+  final CharacterRepository repository;
 
-  SearchCharactersCubit(this.characterRepository)
-      : super(SearchCharactersInitial());
+  SearchCharactersCubit(this.repository) : super(SearchCharactersInitial());
 
-  void searchCharacters(String query) async {
+  Future<void> suggestCharacters(String query) async {
     if (query.isEmpty) {
       emit(SearchCharactersInitial());
       return;
@@ -19,28 +19,30 @@ class SearchCharactersCubit extends Cubit<SearchCharactersState> {
     emit(SearchCharactersLoading());
 
     try {
-      final characters = await characterRepository.searchCharacters(query);
+      final suggestions = await repository.suggestCharacters(query);
+      emit(SearchCharactersSuggested(suggestions));
+    } catch (e) {
+      emit(SearchCharactersError(e.toString()));
+    }
+  }
+
+  Future<void> searchCharacters(String query,
+      {String? status, String? gender}) async {
+    emit(SearchCharactersLoading());
+    try {
+      final characters =
+          await repository.searchCharacters(query, status, gender);
       if (characters.isEmpty) {
         emit(SearchCharactersEmpty());
       } else {
         emit(SearchCharactersLoaded(characters));
       }
-    } catch (e) {
-      emit(SearchCharactersError("Error al buscar personajes"));
-    }
-  }
-
-  void suggestCharacters(String query) async {
-    if (query.isEmpty) {
-      emit(SearchCharactersInitial());
-      return;
-    }
-
-    try {
-      final characters = await characterRepository.searchCharacters(query);
-      emit(SearchCharactersSuggested(characters));
-    } catch (e) {
-      emit(SearchCharactersError("Error al buscar sugerencias"));
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        emit(SearchCharactersEmpty());
+      } else {
+        emit(SearchCharactersError(e.toString()));
+      }
     }
   }
 }
