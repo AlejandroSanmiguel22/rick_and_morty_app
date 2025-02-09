@@ -9,14 +9,24 @@ class EpisodeCubit extends Cubit<EpisodeState> {
 
   EpisodeCubit({required this.episodeRepository}) : super(EpisodeInitial());
 
-  Future<void> fetchEpisodes(List<String> episodeUrls) async {
+   Future<void> fetchEpisodes() async {
+    emit(EpisodeLoading());
+    final result = await episodeRepository.getEpisodes();
+
+    result.fold(
+      (error) => emit(EpisodeError(error)),
+      (episodes) => emit(EpisodeLoaded(episodeNames: [], episodes: episodes)),
+    );
+  }
+
+  Future<void> fetchEpisodesName(List<String> episodeUrls) async {
     emit(EpisodeLoading());
 
     final Either<String, List<String>> result = await episodeRepository.getEpisodeNames(episodeUrls);
 
     result.fold(
       (error) => emit(EpisodeError(error)),
-      (episodes) => emit(EpisodeLoaded(episodes)),
+      (episodes) => emit(EpisodeLoaded(episodeNames: episodes, episodes: [])),
     );
   }
 }

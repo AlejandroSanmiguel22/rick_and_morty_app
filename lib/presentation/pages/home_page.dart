@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:rick_and_morty/presentation/pages/character/character_list_page.dart';
+import 'package:rick_and_morty/presentation/pages/episode/episode_list_page.dart';
 import 'package:rick_and_morty/presentation/pages/favorites_page.dart';
 import 'package:rick_and_morty/presentation/pages/location/location_list_page.dart';
 
@@ -11,12 +12,12 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  int _selectedIndex = 0; // 0 = Personajes, 1 = Ubicaciones, 2 = Episodios
+  int _selectedIndex = 0; 
 
   final List<Widget> _pages = [
     CharacterListPage(),
     LocationListPage(),
-    //EpisodeListPage(),
+    EpisodeListPage(),
   ];
 
   @override

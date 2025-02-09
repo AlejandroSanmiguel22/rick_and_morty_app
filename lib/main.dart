@@ -44,7 +44,8 @@ void setupLocator() {
   GetIt.I.registerSingleton<LocationRepository>(locationRepository);
 
   final residentRemoteDataSource = ResidentRemoteDataSource(apiClient.dio);
-  final residentRepository = ResidentRepositoryImpl(remoteDataSource: residentRemoteDataSource);
+  final residentRepository =
+      ResidentRepositoryImpl(remoteDataSource: residentRemoteDataSource);
   GetIt.I.registerSingleton<ResidentRepository>(residentRepository);
 }
 
@@ -56,17 +57,23 @@ class MyApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider(
-            create: (context) =>
-                CharacterCubit(repository: GetIt.I<CharacterRepository>())
-                  ..fetchCharacters()),
+          create: (context) =>
+              CharacterCubit(repository: GetIt.I<CharacterRepository>())
+                ..fetchCharacters(),
+        ),
         BlocProvider(
-            create: (context) =>
-                EpisodeCubit(episodeRepository: GetIt.I<EpisodeRepository>())),
-        BlocProvider(create: (context) => FavoritesCubit()..loadFavorites()),
+          create: (context) => EpisodeCubit(
+            episodeRepository: GetIt.I<EpisodeRepository>(),
+          ),
+        ),
         BlocProvider(
-            create: (context) =>
-                LocationCubit(locationRepository: GetIt.I<LocationRepository>())
-                  ..fetchLocations()),
+          create: (context) => FavoritesCubit()..loadFavorites(),
+        ),
+        BlocProvider(
+          create: (context) =>
+              LocationCubit(locationRepository: GetIt.I<LocationRepository>())
+                ..fetchLocations(),
+        ),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,

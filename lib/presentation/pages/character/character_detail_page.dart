@@ -12,8 +12,8 @@ class CharacterDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 🔥 Llamamos a `fetchEpisodes()` ANTES de construir la UI
-    BlocProvider.of<EpisodeCubit>(context).fetchEpisodes(character.episode);
+
+    BlocProvider.of<EpisodeCubit>(context).fetchEpisodesName(character.episode);
 
     return Scaffold(
       appBar: AppBar(
@@ -68,7 +68,7 @@ class CharacterDetailPage extends StatelessWidget {
                   return const CircularProgressIndicator();
                 } else if (state is EpisodeLoaded) {
                   return Column(
-                    children: state.episodeNames
+                    children: state.episodeNames!
                         .map((ep) =>
                             Text(ep, style: const TextStyle(fontSize: 16)))
                         .toList(),
