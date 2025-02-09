@@ -294,26 +294,37 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildMenuButtons() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: [
-        _buildOption("Personajes", 0),
-        _buildOption("Ubicaciones", 1),
-        _buildOption("Episodios", 2),
-      ],
-    );
-  }
+  return Row(
+    mainAxisAlignment: MainAxisAlignment.spaceAround,
+    children: [
+      _buildOption("Personajes", 0),
+      _buildOption("Ubicaciones", 1),
+      _buildOption("Episodios", 2),
+    ],
+  );
+}
 
-  Widget _buildOption(String title, int index) {
-    return ElevatedButton(
-      onPressed: () {
-        setState(() {
-          _selectedIndex = index;
-        });
-      },
-      child: Text(title),
-    );
-  }
+Widget _buildOption(String title, int index) {
+  bool isSelected = _selectedIndex == index;
+
+  return ElevatedButton(
+    style: ElevatedButton.styleFrom(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+      ),
+      backgroundColor: isSelected ? Colors.blue : Colors.grey[300], // Color activo/inactivo
+      foregroundColor: isSelected ? Colors.white : Colors.black, // Color del texto
+    ),
+    onPressed: () {
+      setState(() {
+        _selectedIndex = index;
+      });
+    },
+    child: Text(title),
+  );
+}
+
 
   Widget _buildContent() {
     return Expanded(
