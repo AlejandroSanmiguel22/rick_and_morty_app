@@ -370,8 +370,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildContent() {
-    return Expanded(
-      child: IndexedStack(
+    return IndexedStack(
         index: _selectedIndex,
         children: _pages.map((page) {
           if (_selectedIndex == 0) {
@@ -460,9 +459,7 @@ class _HomePageState extends State<HomePage> {
             );
           }
           return page;
-        }).toList(),
-      ),
-    );
+        }).toList());
   }
 
   void _performSearch(String query) {
@@ -609,29 +606,33 @@ class _HomePageState extends State<HomePage> {
     List<String> selectedFilters,
     Function(Function()) setModalState,
   ) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: options.map((option) {
-        final isSelected = selectedFilters.contains(option);
-        return Row(
-          children: [
-            Checkbox(
-              value: isSelected,
-              activeColor: Colors.green, // Color cuando está seleccionado
-              onChanged: (bool? value) {
-                setModalState(() {
-                  if (value == true) {
-                    selectedFilters.add(option);
-                  } else {
-                    selectedFilters.remove(option);
-                  }
-                });
-              },
-            ),
-            Text(option, style: const TextStyle(fontSize: 16)),
-          ],
-        );
-      }).toList(),
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: options.map((option) {
+          final isSelected = selectedFilters.contains(option);
+          return Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Checkbox(
+                value: isSelected,
+                activeColor: Colors.green,
+                onChanged: (bool? value) {
+                  setModalState(() {
+                    if (value == true) {
+                      selectedFilters.add(option);
+                    } else {
+                      selectedFilters.remove(option);
+                    }
+                  });
+                },
+              ),
+              Text(option, style: const TextStyle(fontSize: 16)),
+            ],
+          );
+        }).toList(),
+      ),
     );
   }
 
