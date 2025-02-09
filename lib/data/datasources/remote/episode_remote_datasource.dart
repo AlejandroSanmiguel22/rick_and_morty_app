@@ -46,11 +46,16 @@ class EpisodeRemoteDataSource {
     }
   }
 
-  Future<List<EpisodeModel>> searchEpisodes(String episode) async {
+  Future<List<EpisodeModel>> searchEpisodes(
+      {String? name, List<String>? episodes}) async {
     try {
       final response = await apiClient.dio.get(
         "https://rickandmortyapi.com/api/episode/",
-        queryParameters: {"name": episode}, // Usamos name en vez de episode
+        queryParameters: {
+          if (name != null && name.isNotEmpty) "name": name,
+          if (episodes != null && episodes.isNotEmpty)
+            "episode": episodes.join(','), // Unimos múltiples temporadas
+        },
       );
       final List results = response.data['results'];
       return results.map((e) => EpisodeModel.fromJson(e)).toList();

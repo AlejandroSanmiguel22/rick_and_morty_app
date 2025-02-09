@@ -9,11 +9,11 @@ class SearchEpisodeCubit extends Cubit<SearchEpisodeState> {
 
   SearchEpisodeCubit(this.episodeRepository) : super(SearchEpisodeInitial());
 
-  Future<void> searchEpisodes(String episode) async {
+  Future<void> searchEpisodes({String? name, List<String>? episodes}) async {
     emit(SearchEpisodeLoading());
 
     final Either<String, List<EpisodeEntity>> result =
-        await episodeRepository.searchEpisodes(episode);
+        await episodeRepository.searchEpisodes(name: name, episodes: episodes);
 
     result.fold(
       (error) => emit(SearchEpisodeError(error)),

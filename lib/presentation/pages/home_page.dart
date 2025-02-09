@@ -166,12 +166,15 @@ class _HomePageState extends State<HomePage> {
           itemBuilder: (context, index) {
             final character = suggestions[index];
             return ListTile(
+              leading: Image.network(character.image),
               title: Text(character.name),
-              subtitle:
-                  character.status.isNotEmpty ? Text(character.status) : null,
-              leading: character.image.isNotEmpty
-                  ? CircleAvatar(backgroundImage: NetworkImage(character.image))
-                  : null,
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(character.species),
+                  Text(character.status),
+                ],
+              ),
               onTap: () => _selectSearchResult(character.name),
             );
           },
@@ -205,8 +208,9 @@ class _HomePageState extends State<HomePage> {
           itemBuilder: (context, index) {
             final location = suggestions[index];
             return ListTile(
+              leading: const Icon(Icons.location_on),
               title: Text(location.name),
-              subtitle: Text("Dimension: ${location.dimension}"),
+              subtitle: Text("${location.type} - ${location.dimension}"),
               onTap: () => _selectSearchResult(location.name),
             );
           },
@@ -427,7 +431,14 @@ class _HomePageState extends State<HomePage> {
                     return ListTile(
                       leading: Image.network(character.image),
                       title: Text(character.name),
-                      subtitle: Text(character.status),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(character.species),
+                          Text(character.status),
+                          Text(character.origin),
+                        ],
+                      ),
                       onTap: () {
                         Navigator.push(
                           context,
@@ -453,8 +464,10 @@ class _HomePageState extends State<HomePage> {
                   itemBuilder: (context, index) {
                     final location = state.locations[index];
                     return ListTile(
+                      leading: const Icon(Icons.location_on),
                       title: Text(location.name),
-                      subtitle: Text("Dimension: ${location.dimension}"),
+                      subtitle:
+                          Text("${location.type} - ${location.dimension}"),
                       onTap: () {
                         Navigator.push(
                           context,
@@ -483,8 +496,8 @@ class _HomePageState extends State<HomePage> {
                   itemBuilder: (context, index) {
                     final episode = state.episodes[index];
                     return ListTile(
-                      title: Text(episode.name),
-                      subtitle: Text("Episode: ${episode.episode}"),
+                      title: Text("${episode.episode} - ${episode.name}"),
+                      subtitle: Text("Air date: ${episode.airDate}"),
                       onTap: () {
                         Navigator.push(
                           context,
@@ -534,7 +547,13 @@ class _HomePageState extends State<HomePage> {
             );
         break;
       case 2:
-        context.read<SearchEpisodeCubit>().searchEpisodes(query);
+        context.read<SearchEpisodeCubit>().searchEpisodes(
+              name: query.isNotEmpty ? query : null,
+              episodes: selectedType.isNotEmpty
+                  ? selectedType
+                  : null, 
+            );
+
         break;
     }
   }
@@ -621,7 +640,7 @@ class _HomePageState extends State<HomePage> {
                       style:
                           TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
-                    _buildCheckboxRow(["S1", "S2", "S3", "S4", "S5"],
+                    _buildCheckboxRow(["S1", "S2"],
                         selectedType, setModalState),
                   ],
                   const SizedBox(height: 12),
@@ -735,15 +754,18 @@ class _HomePageState extends State<HomePage> {
             );
         break;
       case 2: // Episodios
-        String seasonFilter =
-            selectedType.isNotEmpty ? selectedType.join(',') : "";
-        String searchQuery = _searchController.text;
+        List<String> seasonFilters = selectedType.map((season) {
+          return "S${season.substring(1).padLeft(2, '0')}"; // Convierte "S1" en "S01"
+        }).toList();
 
-        if (seasonFilter.isNotEmpty) {
-          searchQuery = "$searchQuery $seasonFilter";
-        }
-
-        context.read<SearchEpisodeCubit>().searchEpisodes(searchQuery);
+        context.read<SearchEpisodeCubit>().searchEpisodes(
+              name: _searchController.text.isNotEmpty
+                  ? _searchController.text
+                  : null,
+              episodes: seasonFilters.isNotEmpty
+                  ? seasonFilters
+                  : null, // Ahora acepta múltiples temporadas
+            );
         break;
     }
   }

@@ -6,6 +6,8 @@ abstract class EpisodeRepository {
   Future<Either<String, List<String>>> getEpisodeNames(
       List<String> episodeUrls);
 
-  Future<Either<String, List<EpisodeEntity>>> searchEpisodes(String episode);
+  Future<Either<String, List<EpisodeEntity>>> searchEpisodes(
+      {String? name, List<String>? episodes});
+
   Future<List<EpisodeEntity>> suggestEpisodes(String query);
 }
