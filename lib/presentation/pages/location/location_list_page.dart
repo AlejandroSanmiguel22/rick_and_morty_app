@@ -15,29 +15,49 @@ class LocationListPage extends StatelessWidget {
           if (state is LocationLoading) {
             return const Center(child: CircularProgressIndicator());
           } else if (state is LocationLoaded) {
-            return ListView.builder(
-              itemCount: state.locations.length,
-              itemBuilder: (context, index) {
-                final location = state.locations[index];
-                return ListTile(
-                  leading: const Icon(Icons.location_on),
-                  title: Text(location.name),
-                  subtitle: Text("${location.type} - ${location.dimension}"),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => LocationDetailPage(location: location),
-                      ),
-                    );
-                  },
-                );
-              },
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: ListView.separated(
+                itemCount: state.locations.length,
+                separatorBuilder: (_, __) => const Divider(height: 1, thickness: 0.8),
+                itemBuilder: (context, index) {
+                  final location = state.locations[index];
+                  return ListTile(
+                    contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                    leading: const Icon(Icons.location_on, size: 30, color: Colors.blue), 
+                    title: Text(
+                      location.name,
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Text(
+                      "${location.type} - ${location.dimension}",
+                      style: const TextStyle(fontSize: 14, color: Colors.black54),
+                    ),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => LocationDetailPage(location: location),
+                        ),
+                      );
+                    },
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), // ✅ Bordes redondeados
+                  );
+                },
+              ),
             );
           } else if (state is LocationError) {
-            return Center(child: Text(state.message));
+            return Center(
+              child: Text(
+                state.message,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            );
           }
-          return const Center(child: Text("No hay ubicaciones disponibles."));
+          return const Center(
+            child: Text("No hay ubicaciones disponibles.",
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          );
         },
       ),
     );

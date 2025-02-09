@@ -15,6 +15,7 @@ import 'package:rick_and_morty/presentation/pages/episode/episode_list_page.dart
 import 'package:rick_and_morty/presentation/pages/favorites_page.dart';
 import 'package:rick_and_morty/presentation/pages/location/location_detail_page.dart';
 import 'package:rick_and_morty/presentation/pages/location/location_list_page.dart';
+import 'package:rick_and_morty/presentation/widgets/custom_card.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -424,32 +425,39 @@ class _HomePageState extends State<HomePage> {
               if (state is SearchCharactersLoading) {
                 return const Center(child: CircularProgressIndicator());
               } else if (state is SearchCharactersLoaded) {
-                return ListView.builder(
-                  itemCount: state.characters.length,
-                  itemBuilder: (context, index) {
-                    final character = state.characters[index];
-                    return ListTile(
-                      leading: Image.network(character.image),
-                      title: Text(character.name),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(character.species),
-                          Text(character.status),
-                          Text(character.origin),
+                return Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: GridView.builder(
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 10,
+                      mainAxisSpacing: 10,
+                      childAspectRatio: 0.8,
+                    ),
+                    itemCount: state.characters.length,
+                    itemBuilder: (context, index) {
+                      final character = state.characters[index];
+                      return CustomCard(
+                        title: character.name,
+                        subtitle: "${character.species} - ${character.status}",
+                        imageUrl: character.image,
+                        extraInfo: [
+                          "Origin: ${character.origin}",
+                          "Gender: ${character.gender}"
                         ],
-                      ),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                CharacterDetailPage(character: character),
-                          ),
-                        );
-                      },
-                    );
-                  },
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  CharacterDetailPage(character: character),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
                 );
               }
               return page;
@@ -459,26 +467,44 @@ class _HomePageState extends State<HomePage> {
           return BlocBuilder<SearchLocationsCubit, SearchLocationsState>(
             builder: (context, state) {
               if (state is SearchLocationsLoaded) {
-                return ListView.builder(
-                  itemCount: state.locations.length,
-                  itemBuilder: (context, index) {
-                    final location = state.locations[index];
-                    return ListTile(
-                      leading: const Icon(Icons.location_on),
-                      title: Text(location.name),
-                      subtitle:
-                          Text("${location.type} - ${location.dimension}"),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                LocationDetailPage(location: location),
-                          ),
-                        );
-                      },
-                    );
-                  },
+                return Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  child: ListView.separated(
+                    itemCount: state.locations.length,
+                    separatorBuilder: (_, __) =>
+                        const Divider(height: 1, thickness: 0.8),
+                    itemBuilder: (context, index) {
+                      final location = state.locations[index];
+                      return ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                            vertical: 10, horizontal: 8),
+                        leading: const Icon(Icons.location_on,
+                            size: 30, color: Colors.blue),
+                        title: Text(
+                          location.name,
+                          style: const TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: Text(
+                          "${location.type} - ${location.dimension}",
+                          style: const TextStyle(
+                              fontSize: 14, color: Colors.black54),
+                        ),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  LocationDetailPage(location: location),
+                            ),
+                          );
+                        },
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                      );
+                    },
+                  ),
                 );
               }
               return page;
@@ -491,24 +517,44 @@ class _HomePageState extends State<HomePage> {
               if (state is SearchEpisodeLoading) {
                 return const Center(child: CircularProgressIndicator());
               } else if (state is SearchEpisodeLoaded) {
-                return ListView.builder(
-                  itemCount: state.episodes.length,
-                  itemBuilder: (context, index) {
-                    final episode = state.episodes[index];
-                    return ListTile(
-                      title: Text("${episode.episode} - ${episode.name}"),
-                      subtitle: Text("Air date: ${episode.airDate}"),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                EpisodeDetailPage(episode: episode),
-                          ),
-                        );
-                      },
-                    );
-                  },
+                return Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  child: ListView.separated(
+                    itemCount: state.episodes.length,
+                    separatorBuilder: (_, __) =>
+                        const Divider(height: 1, thickness: 0.8),
+                    itemBuilder: (context, index) {
+                      final episode = state.episodes[index];
+                      return ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                            vertical: 10, horizontal: 8),
+                        leading: const Icon(Icons.tv,
+                            size: 30, color: Colors.blueAccent),
+                        title: Text(
+                          "${episode.episode} - ${episode.name}",
+                          style: const TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: Text(
+                          "Air date: ${episode.airDate}",
+                          style: const TextStyle(
+                              fontSize: 14, color: Colors.black54),
+                        ),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  EpisodeDetailPage(episode: episode),
+                            ),
+                          );
+                        },
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                      );
+                    },
+                  ),
                 );
               }
               return page;
@@ -549,9 +595,7 @@ class _HomePageState extends State<HomePage> {
       case 2:
         context.read<SearchEpisodeCubit>().searchEpisodes(
               name: query.isNotEmpty ? query : null,
-              episodes: selectedType.isNotEmpty
-                  ? selectedType
-                  : null, 
+              episodes: selectedType.isNotEmpty ? selectedType : null,
             );
 
         break;
@@ -640,8 +684,8 @@ class _HomePageState extends State<HomePage> {
                       style:
                           TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
-                    _buildCheckboxRow(["S1", "S2"],
-                        selectedType, setModalState),
+                    _buildCheckboxRow(
+                        ["S1", "S2"], selectedType, setModalState),
                   ],
                   const SizedBox(height: 12),
                   Row(
@@ -658,7 +702,7 @@ class _HomePageState extends State<HomePage> {
                           }
                         });
                       }),
-                      _buildOptionButton("Apply", Colors.green, () {
+                      _buildOptionButton("Apply", Colors.blue, () {
                         Navigator.pop(context);
                         _applyFilters();
                       }),
@@ -691,7 +735,7 @@ class _HomePageState extends State<HomePage> {
             children: [
               Checkbox(
                 value: isSelected,
-                activeColor: Colors.green,
+                activeColor: Colors.blue,
                 onChanged: (bool? value) {
                   setModalState(() {
                     if (value == true) {
