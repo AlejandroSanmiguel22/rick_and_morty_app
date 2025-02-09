@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:dartz/dartz.dart';
-import '../../../domain/entities/character_entity.dart';
-import '../../../domain/repositories/character_repository.dart';
+import '../../../../domain/entities/character_entity.dart';
+import '../../../../domain/repositories/character_repository.dart';
 import 'character_state.dart';
 
 class CharacterCubit extends Cubit<CharacterState> {

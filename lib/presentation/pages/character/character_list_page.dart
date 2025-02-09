@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:rick_and_morty/presentation/bloc/cubits/character_cubit.dart';
-import 'package:rick_and_morty/presentation/bloc/cubits/character_state.dart';
-import 'package:rick_and_morty/presentation/pages/character_detail_page.dart';
-import 'favorites_page.dart';
+import 'package:rick_and_morty/presentation/bloc/cubits/characters/character_cubit.dart';
+import 'package:rick_and_morty/presentation/bloc/cubits/characters/character_state.dart';
+import 'package:rick_and_morty/presentation/pages/character/character_detail_page.dart';
 
 class CharacterListPage extends StatelessWidget {
   const CharacterListPage({super.key});
@@ -11,21 +10,6 @@ class CharacterListPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Rick and Morty Characters"),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.favorite, color: Colors.red),
-            onPressed: () {
-              // Navegar a la pantalla de favoritos
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const FavoritesPage()),
-              );
-            },
-          ),
-        ],
-      ),
       body: BlocBuilder<CharacterCubit, CharacterState>(
         builder: (context, state) {
           if (state is CharacterLoading) {

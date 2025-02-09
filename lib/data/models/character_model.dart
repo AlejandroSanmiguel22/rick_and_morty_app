@@ -1,42 +1,46 @@
-import 'location_model.dart';
+import 'package:rick_and_morty/domain/entities/character_entity.dart';
 
-class CharacterModel {
-  final int id;
-  final String name;
-  final String status;
-  final String species;
-  final String type;
-  final String gender;
-  final String image;
-  final List<String> episode;
-  final LocationModel origin;
-  final LocationModel location;
 
+class CharacterModel extends CharacterEntity {
   CharacterModel({
-    required this.id,
-    required this.name,
-    required this.status,
-    required this.species,
-    required this.type,
-    required this.gender,
-    required this.image,
-    required this.episode,
-    required this.origin,
-    required this.location,
-  });
+    required int id,
+    required String name,
+    required String status,
+    required String species,
+    required String type,
+    required String gender,
+    required String image,
+    required List<String> episode,
+    required String origin,
+    required String location,
+  }) : super(
+          id: id,
+          name: name,
+          status: status,
+          species: species,
+          type: type,
+          gender: gender,
+          image: image,
+          episode: episode,
+          origin: origin,
+          location: location,
+        );
 
   factory CharacterModel.fromJson(Map<String, dynamic> json) {
     return CharacterModel(
-      id: json['id'] as int,
-      name: json['name'] as String,
-      status: json['status'] as String,
-      species: json['species'] as String,
-      type: json['type'] ?? '',
-      gender: json['gender'] as String,
-      image: json['image'] as String,
-      episode: List<String>.from(json['episode'] ?? []), 
-      origin: LocationModel.fromJson(json['origin'] ?? {}),
-      location: LocationModel.fromJson(json['location'] ?? {}),
+      id: json['id'] ?? 0, 
+      name: json['name'] ?? "Desconocido",
+      status: json['status'] ?? "Desconocido",
+      species: json['species'] ?? "Desconocido",
+      type: json['type'] ?? "",
+      gender: json['gender'] ?? "Desconocido",
+      image: json['image'] ?? "https://via.placeholder.com/150",
+      episode: (json['episode'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
+      origin: json['origin']?['name'] ?? "Desconocido",
+      location: json['location']?['name'] ?? "Desconocido",
     );
   }
 
@@ -50,8 +54,8 @@ class CharacterModel {
       'gender': gender,
       'image': image,
       'episode': episode,
-      'origin': origin.toJson(),
-      'location': location.toJson(),
+      'origin': origin,
+      'location': location,
     };
   }
 }

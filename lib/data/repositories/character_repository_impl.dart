@@ -12,26 +12,9 @@ class CharacterRepositoryImpl implements CharacterRepository {
   Future<Either<String, List<CharacterEntity>>> getCharacters() async {
     try {
       final characters = await remoteDataSource.getCharacters();
-
-      // Mapeamos CharacterModel a CharacterEntity
-      final characterEntities = characters.map<CharacterEntity>((character) {
-        return CharacterEntity(
-          id: character.id,
-          name: character.name,
-          status: character.status,
-          species: character.species,
-          type: character.type,
-          gender: character.gender,
-          image: character.image,
-          episode: character.episode,
-          origin: character.origin.name,
-          location: character.location.name,
-        );
-      }).toList();
-
-      return Right(characterEntities);
+      return Right(characters);
     } catch (e) {
-      return Left('Error obteniendo personajes: $e');
+      return Left("Error al obtener personajes: ${e.toString()}");
     }
   }
 }

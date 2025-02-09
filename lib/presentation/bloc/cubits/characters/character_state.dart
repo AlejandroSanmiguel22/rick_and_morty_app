@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import '../../../domain/entities/character_entity.dart';
+import '../../../../domain/entities/character_entity.dart';
 
 abstract class CharacterState extends Equatable {
   @override
